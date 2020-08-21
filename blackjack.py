@@ -87,32 +87,34 @@ class Hand(Stack):
         if list(pulled.values())[0] is "A":
             if self.name is not "Dealer":
                 if self.total < 11:
-                    while True:                    
-                        acechoice = input("1 or 11?")
-                        try:
-                            if int(acechoice) == 1 or int(acechoice) == 11:
-                                print(
-                                    self.name
-                                    + " has chosen "
-                                    + acechoice
-                                    + " for the ace. \n")
-                                self.total += int(acechoice)
-                                if int(acechoice) == 11:
-                                    self.soft = True
-                                break
-                            else:
-                                print(
-                                    "Invalid input. Please try again! \n")
-                        except ValueError:
-                            print(
-                                "Invalid input. Please try again! \n"
-                            )
+                    self.total += values["A"][1]
+                    self.soft = True
+                    #while True:                    
+                        #acechoice = input("1 or 11?")
+                        #try:
+                            #if int(acechoice) == 1 or int(acechoice) == 11:
+                                #print(
+                                #    self.name
+                                #    + " has chosen "
+                                #    + acechoice
+                                #    + " for the ace. \n")
+                                #self.total += int(acechoice)
+                                #if int(acechoice) == 11:
+                                #    self.soft = True
+                                #break
+                            #else:
+                            #    print(
+                            #        "Invalid input. Please try again! \n")
+                        #except ValueError:
+                        #    print(
+                        #        "Invalid input. Please try again! \n"
+                        #    )
 
                 else:
-                    print(
-                        self.name
-                        + " must take 1 for the ace. \n")
-                    self.total += 1
+                    #print(
+                    #    self.name
+                    #    + " must take 1 for the ace. \n")
+                    self.total += values["A"][0]
             else:
                 if self.total < 11:
                     self.total += values["A"][1]
@@ -161,7 +163,7 @@ class Hand(Stack):
         if self.total == 21 and self.soft is True:
             print(
                 self.name
-                + " has Blackjack! \n"
+                + " has Blackjack. \n"
             )
             return True
         else:
@@ -175,7 +177,7 @@ dealer = Hand("Dealer")
 
 def play_game():
     print(
-        "Welcome to Blackjack! \nPlayer has $"
+        "Welcome to Blackjack! \n\nPlayer has $"
         + str(player.wallet)
         + ". \n"
         + "\nThe minimum bet is $10 and the maximum is $1000.\n"
@@ -196,23 +198,23 @@ def betting_phase():
                     "Invalid input. Please try again! \n"
                 )
         except ValueError:
-            print("Invalid input. Please try again!. \n")
+            print("Invalid input. Please try again! \n")
 
     initial_deal()
 
 def initial_deal():
     
     deck.shuffle()
-    #deck.pop()
-    #deck.pop()
-    #deck.pop()
-    #deck.pop()
-    #deck.pop()
-    #deck.push({"Spades" : "A"})
-    #deck.push({"Clubs" : "4"})
-    #deck.push({"Hearts" : "K"})
-    #deck.push({"Clubs" : "2"})
-    #deck.push({"Diamonds" : "Q"})
+    deck.pop()
+    deck.pop()
+    deck.pop()
+    deck.pop()
+    deck.pop()
+    deck.push({"Spades" : "A"})
+    deck.push({"Clubs" : "4"})
+    deck.push({"Hearts" : "K"})
+    deck.push({"Clubs" : "2"})
+    deck.push({"Diamonds" : "Q"})
     player.deal(deck)
     dealer.deal(deck)
     player.deal(deck)
@@ -266,8 +268,11 @@ def gameplay():
             + list(splitcard.values())[0]
             + " of "
             + list(splitcard.keys())[0]
-            + " to a new hand. \n"
+            + " to a new hand with a bet of $"
+            + str(player.currentbet)
+            + ". \n"
             )
+        player.wallet -= player.currentbet
         #player.currentbet += player.currentbet
         handlist[0].deal(deck)
         if handlist[0].has_blackjack() is True:
@@ -308,12 +313,14 @@ def gameplay():
                                 print(
                                     "Hand "
                                     + str(i + 1)
-                                    + " bust! \n"
+                                    + " bust! "
+                                    + "\n\n"
                                     + player.name
                                     + " loses $"
                                     + str(player.currentbet)
                                     + ". \n"
                                 )
+                                
                                 #player.currentbet -= player.currentbet
                                 completecount += 1
                                 handlist[i].bust = True
@@ -340,7 +347,7 @@ def gameplay():
                             + str(i + 1)
                             + ". \n"
                         )
-                        #player.currentbet += player.currentbet
+                        player.wallet -= player.currentbet
                         handlist[i].hit(deck)
                         if handlist[i].total > 21:
                             if handlist[i].soft is True:
@@ -361,12 +368,13 @@ def gameplay():
                                 print(
                                     "Hand "
                                     + str(i + 1)
-                                    + " bust! \n"
+                                    + " bust! \n\n"
                                     + player.name
                                     + " loses $"
                                     + str(player.currentbet * 2)
                                     + ". \n"
                                 )
+                                
                                 #player.currentbet -= (player.currentbet * 2)
                                 completecount += 1
                                 handlist[i].bust = True
@@ -411,12 +419,15 @@ def dealer_phase():
         if dealer.soft is True:
             while dealer.total <= 17:
                 dealer.deal(deck)
+                if dealer.total > 21:
+                    dealer.soft = False
+                    dealer.total -= 10
                 print(
                     "Dealer total is "
                     + str(dealer.total)
                     + ". \n"
                 )
-        if dealer.soft is False:
+        elif dealer.soft is False:
             while dealer.total < 17:
                 dealer.deal(deck)
                 print(
@@ -433,22 +444,23 @@ def dealer_phase():
             earnings = 0
             if player.bust == False:
                 player.wallet += player.currentbet * 2
-                earnings += player.currentbet 
+                earnings += player.currentbet
                 if player.took_double == True:
-                    player.wallet += player.currentbet * 2
-                    earnings += player.currentbet
+                    player.wallet += player.currentbet * 4
+                    earnings += player.currentbet * 2
             if player.took_split == True:
                 if playersplit.bust == False:
                     player.wallet += player.currentbet * 2
                     earnings += player.currentbet
                     if playersplit.took_double == True:
-                        player.wallet += player.currentbet * 2
-                        earnings += player.currentbet
+                        player.wallet += player.currentbet * 4
+                        earnings += player.currentbet * 2
             print(
                 "Player wins $"
                 + str(earnings)
                 + ". \n"
             )
+            
         
     if dealer.bust == False:
         return score_phase()
@@ -462,8 +474,14 @@ def score_phase():
     losses = 0
 
 
-    if player.has_blackjack() is True:
-        if dealer.has_blackjack() is False:
+    if player.blackjack is True:
+        print(
+            "Player has Blackjack. \n"
+        )
+        if dealer.blackjack is False:
+            print(
+                "Dealer does not have Blackjack. \n"
+            )
             if player.took_double is True:
                 print(
                     "Player wins $"
@@ -482,12 +500,18 @@ def score_phase():
                 earnings += (player.currentbet)
         else:
             print(
-                "Player and dealer tied!"
+                "Player and dealer tied! \n"
                 )
 
     if player.took_split is True:
-        if playersplit.has_blackjack() is True:
+        if playersplit.blackjack is True:
+            print(
+                "Player's second hand has Blackjack. \n"
+            )
             if dealer.has_blackjack() is False:
+                print(
+                    "Dealer does not have Blackjack. \n"
+                )
                 if playersplit.took_double is True:
                     print(
                         playersplit.name
@@ -512,16 +536,58 @@ def score_phase():
                     "Player and dealer tied!"
                     )
 
+    if player.blackjack is False:        
+        if dealer.blackjack is True:
+            print(
+                "Player does not have Blackjack. \n"
+            )
+            if player.took_double is True:
+                print(
+                    player.name
+                    + " loses $"
+                    + str(player.currentbet * 2)
+                    + ". \n"
+                )
+                losses += (player.currentbet * 2)
+            else:
+                print(
+                    player.name
+                    + " loses $"
+                    + str(player.currentbet)
+                    + ". \n"
+                )
+    if player.took_split is True:
+        if playersplit.blackjack is False:
+            if dealer.blackjack is True:
+                print(
+                    "Player's second hand does not have Blackjack. \n"
+                )
+                if playersplit.took_double is True:
+                    print(
+                        playersplit.name
+                        + " loses $"
+                        + str(player.currentbet * 2)
+                        + ". \n"
+                    )
+                    losses += (player.currentbet * 2)
+                else:
+                    print(
+                        playersplit.name
+                        + " loses $"
+                        + str(player.currentbet)
+                        + ". \n"
+                    )
+                    losses += player.currentbet
 
 
-    if player.bust is False:
+    if player.bust is False and player.blackjack is False and dealer.blackjack is False:
         print(
             player.name
             + " total is "
             + str(player.total)
             + ". \n"
         )
-        if player.total > dealer.total and dealer.has_blackjack() is False:
+        if player.total > dealer.total:
             if player.took_double is True:
                 print(
                     "Player wins $"
@@ -539,12 +605,12 @@ def score_phase():
                 player.wallet += (player.currentbet * 2)
                 earnings += (player.currentbet)
         
-        if player.total == dealer.total and dealer.has_blackjack() is False:
+        if player.total == dealer.total:
             print(
-                "Player and dealer tied!"
+                "Player and dealer tied! \n"
             )
         
-        else:
+        elif player.total < dealer.total:
             if player.took_double is True:
                 print(
                     "Player loses $"
@@ -552,6 +618,7 @@ def score_phase():
                     + ". \n"
                 )
                 losses += (player.currentbet * 2)
+                
             else:
                 print(
                     "Player loses $"
@@ -559,16 +626,17 @@ def score_phase():
                     + ". \n"
                 )
                 losses += (player.currentbet)
+                
 
     if player.took_split is True:
-        if playersplit.bust is False:
+        if playersplit.bust is False and playersplit.blackjack is False and dealer.blackjack is False:
             print(
                 playersplit.name
                 + " total is "
                 + str(playersplit.total)
                 + ". \n"
             )
-            if playersplit.total > dealer.total and dealer.has_blackjack() is False:
+            if playersplit.total > dealer.total:
                 if playersplit.took_double is True:
                     print(
                         playersplit.name
@@ -589,12 +657,12 @@ def score_phase():
                     earnings += (player.currentbet)
 
             
-            if playersplit.total == dealer.total and dealer.has_blackjack() is False:
+            if playersplit.total == dealer.total:
                 print(
                     "Player and dealer tied!"
                 )
 
-            else:
+            elif playersplit.total < dealer.total:
                 if playersplit.took_double is True:
                     print(
                         playersplit.name
@@ -603,6 +671,7 @@ def score_phase():
                         + ". \n"
                     )
                     losses -= (player.currentbet * 2)
+                    
                 else:
                     print(
                         playersplit.name
@@ -611,6 +680,7 @@ def score_phase():
                         + ". \n"
                     )
                     losses -= (player.currentbet)
+                    
 
     return end_prompt()
 
@@ -618,34 +688,54 @@ def score_phase():
 
 
 def end_prompt():
-    replay = input("Would you like to play again?")
-    if replay.upper() == "Y":
-        player.total = 0
-        player.soft = False    
-        player.facedown = None
-        player.currentbet = None
-        player.took_split = False
-        player.took_double = False     
-        player.blackjack = False
-        player.bust = False
-        playersplit.total = 0
-        playersplit.soft = False    
-        playersplit.facedown = None
-        playersplit.currentbet = None
-        playersplit.took_split = False
-        playersplit.took_double = False    
-        playersplit.blackjack = False
-        playersplit.bust = False
-        dealer.total = 0
-        dealer.soft = False    
-        dealer.facedown = None
-        dealer.currentbet = None
-        dealer.took_split = False
-        dealer.took_double = False
-        dealer.blackjack = False
-        dealer.bust = False
+    while True:
+        replay = input("Would you like to play again? Y/N")
+        try:
+            if replay.upper() == "Y":
+                player.total = 0
+                player.soft = False    
+                player.facedown = None
+                player.currentbet = None
+                player.took_split = False
+                player.took_double = False     
+                player.blackjack = False
+                player.bust = False
+                playersplit.total = 0
+                playersplit.soft = False    
+                playersplit.facedown = None
+                playersplit.currentbet = None
+                playersplit.took_split = False
+                playersplit.took_double = False    
+                playersplit.blackjack = False
+                playersplit.bust = False
+                dealer.total = 0
+                dealer.soft = False    
+                dealer.facedown = None
+                dealer.currentbet = None
+                dealer.took_split = False
+                dealer.took_double = False
+                dealer.blackjack = False
+                dealer.bust = False
     
-        return play_game()
+                return play_game()
+        
+            elif replay.upper() == "N":
+                print(
+                    "Thanks for playing!"
+                )
+                return
+            else:
+                print(
+                    "Invalid input. Please try again!"
+                )
+
+        except ValueError:
+            print(
+                "Invalid input. Please try again!"
+            )
+        
+
+    
     
 
 
