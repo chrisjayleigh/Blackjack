@@ -57,6 +57,18 @@ class Hand(Stack):
             + str(self.currentbet)
             + ". \n"
         )
+    
+    def double_bet(self):
+        new_bet = self.currentbet
+        self.currentbet *= 2
+        self.wallet -= new_bet
+        print(
+            self.name
+            + " bets another $"
+            + str(new_bet)
+            + ". \n"
+        )
+
 
     def deal(self, pool):
         pulled = pool.pop()
@@ -86,10 +98,10 @@ class Hand(Stack):
                                 break
                             else:
                                 print(
-                                    "Invalid selection. Try again! \n")
+                                    "Invalid input. Please try again! \n")
                         except ValueError:
                             print(
-                                "Invalid selection. Try again! \n"
+                                "Invalid input. Please try again! \n"
                             )
 
                 else:
@@ -176,22 +188,22 @@ def betting_phase():
                 break
             else:
                 print(
-                    "Bet must be between $10 and $1000. Please try again! \n"
+                    "Invalid input. Please try again! \n"
                 )
         except ValueError:
-            print("That is not a valid input. \n")
+            print("Invalid input. Please try again!. \n")
 
-    gameplay()
+    initial_deal()
 
-def gameplay():
+def initial_deal():
     
     deck.shuffle()
-    #deck.pop()
-    #deck.pop()
-    #deck.pop()
-    #deck.push({"Hearts" : "K"})
-    #deck.push({"Clubs" : "2"})
-    #deck.push({"Diamonds" : "A"})
+    deck.pop()
+    deck.pop()
+    deck.pop()
+    deck.push({"Hearts" : "K"})
+    deck.push({"Clubs" : "2"})
+    deck.push({"Diamonds" : "Q"})
     player.deal(deck)
     dealer.deal(deck)
     player.deal(deck)
@@ -205,50 +217,95 @@ def gameplay():
                 "Would you like to split? Y/N \n"
                 )
             try:
-                if splitdecision != "Y" and splitdecision != "N":
+                if splitdecision.upper() != "Y" and splitdecision.upper() != "N":
                     print(
-                        "Invalid input. Please try again!"
+                        "Invalid input. Please try again! \n"
                     )
-                elif splitdecision == "N":
+                elif splitdecision.upper() == "N":
                     print(
                         "Player chooses not to split hand. \n"
                     )
-                    break
-                else:
+                    return gameplay()
+                elif splitdecision.upper() == "Y":
                     print(
                         "Player chooses to split hand. \n"
-                    )
-                    playersplit = Hand("Player")
-                    splitcard = player.pop()
-                    playersplit.push(splitcard)
-                    print(
-                        "Player moves the "
-                        + list(splitcard.values())[0]
-                        + " of "
-                        + list(splitcard.keys())[0]
-                        + " to a new hand. \n"
                     )
                     return split_play()
             except ValueError:
                 print(
-                    "Invalid input. Please try again!"
+                    "Invalid input. Please try again! \n"
                     )
                     
 
     else:
-        while True:
-            input(
-                "What would you like to do? \n"
-                + "H to Hit. S to stand. D to double."
-                )
+        gameplay() 
+        
+
+def gameplay():        
+    while True:
+        move = input(
+            "What would you like to do? \n"
+            + "H to Hit. S to stand. D to double. \n"
+            )
+        if move is "H":
+            player.hit(deck)
+            
 
 def split_play():
-    print("Split play placeholder.")
+    playersplit = Hand("Player")
+    splitcard = player.pop()
+    playersplit.push(splitcard)
+    print(
+        "Player moves the "
+        + list(splitcard.values())[0]
+        + " of "
+        + list(splitcard.keys())[0]
+        + " to a new hand. \n"
+        )
+    player.double_bet()
+    #print("Split play placeholder.")
+    completecount = 0
+    handlist = [player, playersplit]
+    while True:
+        for i in range(2):
+            if handlist[i] != None:
+                move = input(
+                    "What would you like to do? (Hand "
+                    + str(i + 1) 
+                    +") \n"
+                    + "H to Hit. S to stand. D to double. \n"
+                ).upper()
+                try:
+                    if move == "H":
+                        print("Hit placeholder")
+                    
+                    if move == "S":
+                        print(
+                            "Player stands on Hand "
+                            + str(i +1)
+                            + ". \n"
+                        )
+                        completecount += 1
+                        handlist[i] = None
+                    
+                    if move == "D":
+                        print("Double placeholder")
+                    
+                    if move != "H" and move != "S" and move != "D":
+                        print(
+                            "Invalid input. Please try again! \n"
+                        )
+                except ValueError:
+                    print(
+                        "Invalid input. PLease try again! \n"
+                    )
+        if completecount == 2:
+            return dealer_phase()
 
 def dealer_phase():
     print("Dealer phase placeholder.")
     
 
 
-    
+
 play_game()
