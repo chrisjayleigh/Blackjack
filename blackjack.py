@@ -1,11 +1,13 @@
 from stack import Stack
+from linkedlist import LinkedList
 import random
 
 faces = [
     'Hearts', 
     'Diamonds', 
     'Clubs', 
-    'Spades']
+    'Spades'
+]
 
 values = {
     "K" : 10, 
@@ -20,7 +22,16 @@ values = {
     "4" : 4,
     "3" : 3,
     "2" : 2,
-    "A" : [1, 11]}
+    "A" : [1, 11]
+}
+
+chips = {
+    "1" : 1,
+    "5" : 5,
+    "25" : 25,
+    "100" : 100
+}
+
 
 #Constructs ordered list of cards for each value in each face.
 unshuffled = []
@@ -157,11 +168,35 @@ class Hand(Stack):
         else:
             return False
 
+
+class Chips(Stack):
+    def __init__(self, name, limit=1000):
+        super().__init__(name, limit=1000)
+        self.wager = None
+
+
 #Stacks necessary for gameplay.
 deck = Deck("Deck", 52)
 player = Hand("Player")
 playersplit = Hand("Player's second hand")
 dealer = Hand("Dealer")
+p1s = Chips("Player Ones")
+p5s = Chips("Player Fives")
+p25s = Chips("Player Twenty Fives")
+p100s = Chips("Player One Hundreds")
+d1s = Chips("Dealer Ones")
+d5s = Chips("Dealer Fives")
+d25s = Chips("Dealer Twenty Fives")
+d100s = Chips("Dealer One HUndreds")
+
+while d1s.has_space() is True:
+    d1s.push(1)
+while d5s.has_space() is True:
+    d5s.push(5)
+while d25s.has_space() is True:
+    d25s.push(25)
+while d100s.has_space() is True:
+    d100s.push(100)
 
 #Game initialization function. Indicates player wallet amount and bet min/max. Moves to betting phase.
 def play_game():
