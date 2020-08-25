@@ -147,6 +147,7 @@ class Hand(Stack):
     def has_blackjack(self):
         
         if self.total == 21 and self.soft is True and self.size == 2:
+            self.blackjack = True
             print(
                 self.name
                 + " has Blackjack. \n"
@@ -201,16 +202,16 @@ def initial_deal():
     
     #DEBUG LINES
     #-----------------------------
-    #deck.pop()
-    #deck.pop()
-    #deck.pop()
-    #deck.pop()
-    #deck.pop()
-    #deck.push({"Spades" : "A"})
-    #deck.push({"Clubs" : "4"})
-    #deck.push({"Hearts" : "K"})
-    #deck.push({"Clubs" : "2"})
-    #deck.push({"Diamonds" : "Q"})
+    deck.pop()
+    deck.pop()
+    deck.pop()
+    deck.pop()
+    deck.pop()
+    deck.push({"Spades" : "A"})
+    deck.push({"Clubs" : "2"})
+    deck.push({"Hearts" : "K"})
+    deck.push({"Clubs" : "Q"})
+    deck.push({"Diamonds" : "Q"})
     #-----------------------------
     
     player.deal(deck)
@@ -539,6 +540,7 @@ def score_phase():
             print(
                 "Player and dealer tied! \n"
                 )
+            player.wallet += player.currentbet
 
     if player.took_split is True:
         if playersplit.blackjack is True:
@@ -572,6 +574,7 @@ def score_phase():
                 print(
                     "Player and dealer tied!"
                     )
+                player.wallet += player.currentbet
     if player.blackjack is False:        
 
         if dealer.blackjack is True:
