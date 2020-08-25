@@ -169,10 +169,64 @@ class Hand(Stack):
             return False
 
 
-class Chips(Stack):
-    def __init__(self, name, limit=1000):
-        super().__init__(name, limit=1000)
-        self.wager = None
+class Chips:
+    def __init__(self, name, owner):
+        self.name = name
+        self.owner = owner
+        self.currentbet = None
+        self.ones = Stack("Ones")
+        self.fives = Stack("Fives")
+        self.twentyfives = Stack("Twenty Fives")
+        self.hundreds = Stack("Hundreds")
+        self.betstack = Stack("Current Bet")
+        if self.name == "Dealer Chips":
+            while self.ones.has_space() is True:
+                self.ones.push(1)
+            while self.fives.has_space() is True:
+                self.fives.push(5)
+            while self.twentyfives.has_space() is True:
+                self.twentyfives.push(25)
+            while self.hundreds.has_space() is True:
+                self.hundreds.push(100)
+
+        if self.name == "Player Chips":
+            for i in range(10):
+                self.hundreds.push(100)
+            for i in range(20):
+                self.twentyfives.push(25)
+            for i in range(80):
+                self.fives.push(5)
+            for i in range(100):
+                self.ones.push(1)
+
+    def bet(self, value):
+        self.currentbet = value
+        counter = value
+        while counter >= 100 and self.hundreds.is_empty() is False:
+            self.betstack.push(self.hundreds.pop())
+            counter -= 100
+        while counter >= 25 and self.twentyfives.is_empty() is False:
+            self.betstack.push(self.twentyfives.pop())
+            counter -= 25
+        while counter >= 5 and self.fives.is_empty() is False:
+            self.betstack.push(self.fives.pop())
+            counter -= 5
+        while counter >= 1 and self.ones.is_empty() is False:
+            self.betstack.push(self.ones.pop())
+            counter -= 1
+        
+        if self.name == "Player Chips":
+            print(
+                self.owner
+                + " has bet $"
+                + str(self.currentbet)
+                + ". \n"
+            
+            )
+
+        
+            
+
 
 
 #Stacks necessary for gameplay.
@@ -180,23 +234,26 @@ deck = Deck("Deck", 52)
 player = Hand("Player")
 playersplit = Hand("Player's second hand")
 dealer = Hand("Dealer")
-p1s = Chips("Player Ones")
-p5s = Chips("Player Fives")
-p25s = Chips("Player Twenty Fives")
-p100s = Chips("Player One Hundreds")
-d1s = Chips("Dealer Ones")
-d5s = Chips("Dealer Fives")
-d25s = Chips("Dealer Twenty Fives")
-d100s = Chips("Dealer One HUndreds")
+#p1s = Chips("Player Ones")
+#p5s = Chips("Player Fives")
+#p25s = Chips("Player Twenty Fives")
+#p100s = Chips("Player One Hundreds")
+#d1s = Chips("Dealer Ones")
+#d5s = Chips("Dealer Fives")
+#d25s = Chips("Dealer Twenty Fives")
+#d100s = Chips("Dealer One HUndreds")
 
-while d1s.has_space() is True:
-    d1s.push(1)
-while d5s.has_space() is True:
-    d5s.push(5)
-while d25s.has_space() is True:
-    d25s.push(25)
-while d100s.has_space() is True:
-    d100s.push(100)
+#while d1s.has_space() is True:
+#    d1s.push(1)
+#while d5s.has_space() is True:
+#    d5s.push(5)
+#while d25s.has_space() is True:
+#    d25s.push(25)
+#while d100s.has_space() is True:
+#    d100s.push(100)
+
+playerchips = Chips("Player Chips", "Player")
+dealerchips = Chips("Dealer Chips", "Dealer")
 
 #Game initialization function. Indicates player wallet amount and bet min/max. Moves to betting phase.
 def play_game():
@@ -218,7 +275,8 @@ def betting_phase():
         betamount = input("How much would you like to bet?").strip("$")
         try:
             if int(betamount) >= 10 and int(betamount) <= 1000:
-                player.bet(int(betamount))
+                playerchips.bet(int(betamount))
+                dealerchips.bet(int(betamount))
                 break
             else:
                 print(
