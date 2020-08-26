@@ -63,26 +63,11 @@ class Hand(Stack):
         self.total = 0
         self.soft = False    
         self.facedown = None
-        self.wallet = 2000
-        self.currentbet = None
         self.took_split = False
         self.took_double = False
-        self.currentbet = None
-        self.double_bet = None
         self.blackjack = False
         self.bust = False
     
-    #Assigns value passed as amount to be current bet value, removes that amount from self.wallet
-    def bet(self, amount):
-    
-        self.currentbet = amount
-        self.wallet -= self.currentbet
-        print(
-            self.name
-            + " bets $"
-            + str(self.currentbet)
-            + ". \n"
-        )
     
     #Assigns card popped from Deck to pulled, checks for ace and possibility of soft hand. 
     #Pushes that card to player or dealer. Adds corresponding value to player or dealer total.
@@ -173,20 +158,21 @@ class Chips:
     def __init__(self, name, owner):
         self.name = name
         self.owner = owner
-        self.currentbet = None
+        self.currentbet = 0
         self.ones = Stack("Ones")
         self.fives = Stack("Fives")
         self.twentyfives = Stack("Twenty Fives")
         self.hundreds = Stack("Hundreds")
         self.betstack = Stack("Current Bet")
+        self.betphase = False
         if self.name == "Dealer Chips":
-            while self.ones.has_space() is True:
+            for i in range(900):
                 self.ones.push(1)
-            while self.fives.has_space() is True:
+            for i in range(900):
                 self.fives.push(5)
-            while self.twentyfives.has_space() is True:
+            for i in range(900):
                 self.twentyfives.push(25)
-            while self.hundreds.has_space() is True:
+            for i in range(900):
                 self.hundreds.push(100)
 
         if self.name == "Player Chips":
@@ -200,7 +186,10 @@ class Chips:
                 self.ones.push(1)
 
     def bet(self, value):
-        self.currentbet = value
+        if self.betphase == True:
+            self.currentbet += value
+        else:
+            self.currentbet = value
         counter = value
         while counter >= 100 and self.hundreds.is_empty() is False:
             self.betstack.push(self.hundreds.pop())
@@ -223,7 +212,57 @@ class Chips:
                 + ". \n"
             
             )
-
+    
+    def get_total(self):
+        totalcount = 0
+        totalcount += (
+            (self.ones.size * 1)
+            + (self.fives.size) * 5
+            + (self.twentyfives.size * 25)
+            + (self.hundreds.size * 100)
+        )
+        return str(totalcount)
+    
+    def return_bet(self):
+        counter = self.currentbet
+        while counter > 0 and self.betstack.is_empty() is False:
+            
+            if self.betstack.top.data == 1:
+                self.ones.push(self.betstack.pop())
+                counter -= 1
+                continue
+            if self.betstack.top.data == 5:
+                self.fives.push(self.betstack.pop())
+                counter -= 5
+                continue
+            if self.betstack.top.data == 25:
+                self.twentyfives.push(self.betstack.pop())
+                counter -= 25
+                continue
+            if self.betstack.top.data == 100:
+                self.hundreds.push(self.betstack.pop())
+                counter -= 100
+                continue
+    
+    def payout_bet(self, target):
+        counter = self.currentbet
+        while counter > 0 and self.betstack.is_empty() is False:
+            if self.betstack.top.data == 1:
+                target.ones.push(self.betstack.pop())
+                counter -= 1
+                continue
+            if self.betstack.top.data == 5:
+                target.fives.push(self.betstack.pop())
+                counter -= 5
+                continue
+            if self.betstack.top.data == 25:
+                target.twentyfives.push(self.betstack.pop())
+                counter -= 25
+                continue
+            if self.betstack.top.data == 100:
+                target.hundreds.push(self.betstack.pop())
+                counter -= 100
+                continue
         
             
 
@@ -260,7 +299,7 @@ def play_game():
 
     print(
         "Welcome to Blackjack! \n\nPlayer has $"
-        + str(player.wallet)
+        + playerchips.get_total()
         + ". \n"
         + "\nThe minimum bet is $10 and the maximum is $1000.\n"
 
@@ -271,19 +310,107 @@ def play_game():
 #Prompts player for bet amount. Moves to initial dealing phase.
 def betting_phase():    
     
-    while True:
-        betamount = input("How much would you like to bet?").strip("$")
-        try:
-            if int(betamount) >= 10 and int(betamount) <= 1000:
-                playerchips.bet(int(betamount))
-                dealerchips.bet(int(betamount))
-                break
+    try:
+        while True:
+            playerchips.betphase = True
+            dealerchips.betphase = True
+            chipselect = input(
+                "Bet Input (Chip - Command): \n"
+                + "One - 1 (Qty: "
+                + str(playerchips.ones.size)
+                + ") \n"
+                + "Five - 5 (Qty: "
+                + str(playerchips.fives.size)
+                + ") \n"
+                + "Twenty Five - 25 (Qty: "
+                + str(playerchips.twentyfives.size)
+                + ") \n"
+                + "One Hundred - 100 (Qty: "
+                + str(playerchips.twentyfives.size)
+                + ") \n"
+                + "Submit - S \n"
+                + "Reset - R \n"
+                + "Current Bet: "
+                + str(playerchips.currentbet)
+                + "\n")
+
+            if chipselect == "100":
+                playerchips.bet(100)
+            
+            elif chipselect == "25":
+                playerchips.bet(25)
+            
+            elif chipselect == "5":
+                playerchips.bet(5)
+            
+            elif chipselect == "1":
+                playerchips.bet(1)
+
+            elif chipselect == "R":
+                while playerchips.betstack.is_empty() is False:
+                    playerchips.return_bet()
+                while dealerchips.betstack.is_empty() is False:
+                    dealerchips.return_bet()
+
+                playerchips.currentbet = 0
+                dealerchips.currentbet = 0
+
+                print(
+                    "Player bet reset!"
+                )
+            
+            elif chipselect == "S":
+                if playerchips.currentbet < 10 or playerchips.currentbet > 1000:
+                    print(
+                        "Invalid bet. Please try again! \n"
+                    )
+                    while playerchips.betstack.is_empty() is False:
+                        playerchips.return_bet()
+                    while dealerchips.betstack.is_empty() is False:
+                        dealerchips.return_bet()
+
+                    playerchips.currentbet = 0
+                    dealerchips.currentbet = 0
+                
+                else:
+                    playerchips.betphase = False
+                    dealerchips.betphase = False
+                    print(
+                        "Player has chosen to bet $"
+                        + str(playerchips.currentbet)
+                        + ". \n"
+                    )
+                    return initial_deal()
+
             else:
                 print(
-                    "Invalid input. Please try again! \n"
-                )
-        except ValueError:
-            print("Invalid input. Please try again! \n")
+                    "Invalid input. Please try again!"
+                )        
+    except ValueError:
+        print(
+            "Invalid input. Please try again!"
+        )
+
+
+            
+
+
+
+
+    
+    #while True:
+    #    betamount = input("How much would you like to bet?").strip("$")
+    #    try:
+    #        if int(betamount) >= 10 and int(betamount) <= 1000:
+    #            playerchips.bet(int(betamount))
+    #            dealerchips.bet(int(betamount))
+    #            break
+    #        else:
+    #            print(
+    #                "Invalid input. Please try again! \n"
+    #            )
+    #    except ValueError:
+    #        print("Invalid input. Please try again! \n")
 
     initial_deal()
 
@@ -371,13 +498,12 @@ def gameplay():
             + list(splitcard.values())[0]
             + " of "
             + list(splitcard.keys())[0]
-            + " to a new hand with a bet of $"
-            + str(player.currentbet)
-            + ". \n"
+            + " to a new hand.  \n"
             )
         
-        #Removes second bet of same amount from player.wallet, deals a card to each hand and checks each for blackjack.
-        player.wallet -= player.currentbet
+        #Removes second bet of same amount from playerchips and dealerchips, deals a card to each player hand and checks each for blackjack.
+        playerchips.bet(playerchips.currentbet)
+        dealerchips.bet(dealerchips.currentbet)
         
         handlist[0].deal(deck)
         if handlist[0].has_blackjack() is True:
@@ -435,10 +561,12 @@ def gameplay():
                                     + "\n\n"
                                     + player.name
                                     + " loses $"
-                                    + str(player.currentbet)
+                                    + str(playerchips.currentbet)
                                     + ". \n"
                                 )
                                                                 
+                                playerchips.payout_bet(dealerchips)
+                                dealerchips.return_bet()
                                 completecount += 1
                                 handlist[i].bust = True
                                 handlist[i] = None
@@ -454,7 +582,7 @@ def gameplay():
                         handlist[i].bust = False
                         handlist[i] = None
                     
-                    #If player chooses to double down, instance variable .took_double is set to True, current bet amount removed from wallet, hand hits and then checks for bust with soft hand functionality.
+                    #If player chooses to double down, instance variable .took_double is set to True, current bet amount removed from playerchips, hand hits and then checks for bust with soft hand functionality.
                     if move == "D":
                         print(
                             "Player doubles down on Hand "
@@ -462,7 +590,8 @@ def gameplay():
                             + ". \n"
                         )
                         handlist[i].took_double = True
-                        player.wallet -= player.currentbet
+                        playerchips.bet(playerchips.currentbet)
+                        dealerchips.bet(dealerchips.currentbet)
                         handlist[i].hit(deck)
                         
                         if handlist[i].total > 21:
@@ -488,10 +617,14 @@ def gameplay():
                                     + " bust! \n\n"
                                     + player.name
                                     + " loses $"
-                                    + str(player.currentbet * 2)
+                                    + str(playerchips.currentbet * 2)
                                     + ". \n"
                                 )
                                                                                        
+                                playerchips.payout_bet(dealerchips)
+                                playerchips.payout_bet(dealerchips)
+                                dealerchips.return_bet()
+                                dealerchips.return_bet()
                                 completecount += 1
                                 handlist[i].bust = True
                                 handlist[i] = None
@@ -569,21 +702,25 @@ def dealer_phase():
             earnings = 0
             
             if player.bust is False:
-                player.wallet += player.currentbet * 2
-                earnings += player.currentbet
+                playerchips.return_bet()
+                dealerchips.payout_bet(playerchips)
+                earnings += playerchips.currentbet
             
                 if player.took_double is True:
-                    player.wallet += player.currentbet * 2
-                    earnings += player.currentbet
+                    playerchips.return_bet()
+                    dealerchips.payout_bet(playerchips)
+                    earnings += playerchips.currentbet
             
             if player.took_split is True:
                 if playersplit.bust is False:
-                    player.wallet += player.currentbet * 2
-                    earnings += player.currentbet
+                    playerchips.return_bet()
+                    dealerchips.payout_bet(playerchips)
+                    earnings += playerchips.currentbet
             
                     if playersplit.took_double is True:
-                        player.wallet += player.currentbet * 2
-                        earnings += player.currentbet 
+                        playerchips.return_bet()
+                        dealerchips.payout_bet(playerchips)
+                        earnings += playerchips.currentbet 
             print(
                 "Player wins $"
                 + str(earnings)
@@ -616,24 +753,32 @@ def score_phase():
             if player.took_double is True:
                 print(
                     "Player wins $"
-                    + str(player.currentbet * 2)
+                    + str(playerchips.currentbet * 2)
                     + "! \n"
                 )
-                player.wallet += (player.currentbet * 4)
-                earnings += (player.currentbet * 2)
+                playerchips.return_bet()
+                playerchips.return_bet()
+                dealerchips.payout_bet(playerchips)
+                dealerchips.payout_bet(playerchips)
+                earnings += (playerchips.currentbet * 2)
             else:
                 print(
                     "Player wins $"
-                    + str(player.currentbet)
+                    + str(playerchips.currentbet)
                     + "! \n"
                 )
-                player.wallet += (player.currentbet * 2)
-                earnings += (player.currentbet)
+                playerchips.return_bet()
+                dealerchips.payout_bet(playerchips)
+                earnings += (playerchips.currentbet)
         else:
             print(
                 "Player and dealer tied! \n"
                 )
-            player.wallet += player.currentbet
+            playerchips.return_bet()
+            dealerchips.return_bet()
+            if player.took_double is True:
+                playerchips.return_bet()
+                dealerchips.return_bet()
 
     if player.took_split is True:
         if playersplit.blackjack is True:
@@ -648,27 +793,36 @@ def score_phase():
                     print(
                         playersplit.name
                         + " wins $"
-                        + str(player.currentbet * 2)
+                        + str(playerchips.currentbet * 2)
                         + "! \n"
                     )
-                    player.wallet += (player.currentbet * 4)
-                    earnings += (player.currentbet * 2)
+                    playerchips.return_bet()
+                    playerchips.return_bet()
+                    dealerchips.payout_bet(playerchips)
+                    dealerchips.payout_bet(playerchips)
+                    earnings += (playerchips.currentbet * 2)
                 else:
                     print(
                         playersplit.name
                         + " wins $"
-                        + str(player.currentbet)
+                        + str(playerchips.currentbet)
                         + "! \n"
                         )
-                    player.wallet += player.currentbet * 2
-                    earnings += (player.currentbet)
+                    playerchips.return_bet()
+                    dealerchips.payout_bet(playerchips)
+                    earnings += (playerchips.currentbet)
 
             else:
                 print(
                     "Player and dealer tied!"
                     )
-                player.wallet += player.currentbet
-    if player.blackjack is False:        
+                playerchips.return_bet()
+                dealerchips.return_bet()
+                if player.took_double is True:
+                    playerchips.return_bet()
+                    dealerchips.return_bet()
+
+    if player.blackjack is False and player.bust is False:        
 
         if dealer.blackjack is True:
             print(
@@ -678,19 +832,26 @@ def score_phase():
                 print(
                     player.name
                     + " loses $"
-                    + str(player.currentbet * 2)
+                    + str(playerchips.currentbet * 2)
                     + ". \n"
                 )
-                losses += (player.currentbet * 2)
+                dealerchips.return_bet()
+                dealerchips.return_bet()
+                playerchips.payout_bet(dealerchips)
+                playerchips.payout_bet(dealerchips)
+                losses += (playerchips.currentbet * 2)
             else:
                 print(
                     player.name
                     + " loses $"
-                    + str(player.currentbet)
+                    + str(playerchips.currentbet)
                     + ". \n"
                 )
+                dealerchips.return_bet()
+                playerchips.payout_bet(dealerchips)
+                losses += playerchips.currentbet
     if player.took_split is True:
-        if playersplit.blackjack is False:
+        if playersplit.blackjack is False and playersplit.bust is False:
             if dealer.blackjack is True:
                 print(
                     "Player's second hand does not have Blackjack. \n"
@@ -699,18 +860,24 @@ def score_phase():
                     print(
                         playersplit.name
                         + " loses $"
-                        + str(player.currentbet * 2)
+                        + str(playerchips.currentbet * 2)
                         + ". \n"
                     )
-                    losses += (player.currentbet * 2)
+                    dealerchips.return_bet()
+                    dealerchips.return_bet()
+                    playerchips.payout_bet(dealerchips)
+                    playerchips.payout_bet(dealerchips)
+                    losses += (playerchips.currentbet * 2)
                 else:
                     print(
                         playersplit.name
                         + " loses $"
-                        + str(player.currentbet)
+                        + str(playerchips.currentbet)
                         + ". \n"
                     )
-                    losses += player.currentbet
+                    dealerchips.return_bet()
+                    playerchips.payout_bet(dealerchips)
+                    losses += playerchips.currentbet
 
     #If player did not bust, and neither player nor dealer have blackjack, compares player total to dealer total. Checks if player took double down in each comparison, and adjusts player wallet and earnings printout accordingly for win or loss, with or without double down.
     #Repeats this process for player split hand if player took split.
@@ -725,41 +892,56 @@ def score_phase():
             if player.took_double is True:
                 print(
                     "Player wins $"
-                    + str(player.currentbet * 2)
+                    + str(playerchips.currentbet * 2)
                     + "! \n"
                 )
-                player.wallet += (player.currentbet * 4)
-                earnings += (player.currentbet * 2)
+                playerchips.return_bet()
+                playerchips.return_bet()
+                dealerchips.payout_bet(playerchips)
+                dealerchips.payout_bet(playerchips)
+                earnings += (playerchips.currentbet * 2)
             else:
                 print(
                     "Player wins $"
-                    + str(player.currentbet)
+                    + str(playerchips.currentbet)
                     + "! \n"
                 )
-                player.wallet += (player.currentbet * 2)
-                earnings += (player.currentbet)
+                playerchips.return_bet()
+                dealerchips.payout_bet(playerchips)
+                earnings += (playerchips.currentbet)
         
         if player.total == dealer.total:
             print(
                 "Player and dealer tied! \n"
             )
-        
+            playerchips.return_bet()
+            dealerchips.return_bet()
+            if player.took_double is True:
+                playerchips.return_bet()
+                dealerchips.return_bet()
+
         elif player.total < dealer.total:
             if player.took_double is True:
                 print(
                     "Player loses $"
-                    + str(player.currentbet * 2)
+                    + str(playerchips.currentbet * 2)
                     + ". \n"
                 )
-                losses += (player.currentbet * 2)
+                dealerchips.return_bet()
+                dealerchips.return_bet()
+                playerchips.payout_bet(dealerchips)
+                playerchips.payout_bet(dealerchips)
+                losses += (playerchips.currentbet * 2)
                 
             else:
                 print(
                     "Player loses $"
-                    + str(player.currentbet)
+                    + str(playerchips.currentbet)
                     + ". \n"
                 )
-                losses += (player.currentbet)
+                dealerchips.return_bet()
+                playerchips.payout_bet(dealerchips)
+                losses += (playerchips.currentbet)
                 
 
     if player.took_split is True:
@@ -775,45 +957,60 @@ def score_phase():
                     print(
                         playersplit.name
                         + " wins $"
-                        + str(player.currentbet * 2)
+                        + str(playerchips.currentbet * 2)
                         + "! \n"
                     )
-                    player.wallet += (player.currentbet * 4)
-                    earnings += (player.currentbet * 2)
+                    playerchips.return_bet()
+                    playerchips.return_bet()
+                    dealerchips.payout_bet(playerchips)
+                    dealerchips.payout_bet(playerchips)
+                    earnings += (playerchips.currentbet * 2)
                 else:
                     print(
                         playersplit.name
                         + " wins $"
-                        + str(player.currentbet)
+                        + str(playerchips.currentbet)
                         + "! \n"
                     )
-                    player.wallet += player.currentbet * 2
-                    earnings += (player.currentbet)
+                    playerchips.return_bet()
+                    dealerchips.payout_bet(playerchips)
+                    earnings += (playerchips.currentbet)
 
             
             if playersplit.total == dealer.total:
                 print(
                     "Player and dealer tied!"
                 )
+                playerchips.return_bet()
+                dealerchips.return_bet()
+                if player.took_double is True:
+                    playerchips.return_bet()
+                    dealerchips.return_bet()
 
             elif playersplit.total < dealer.total:
                 if playersplit.took_double is True:
                     print(
                         playersplit.name
                         + " loses $"
-                        + str(player.currentbet * 2)
+                        + str(playerchips.currentbet * 2)
                         + ". \n"
                     )
-                    losses -= (player.currentbet * 2)
+                    dealerchips.return_bet()
+                    dealerchips.return_bet()
+                    playerchips.payout_bet(dealerchips)
+                    playerchips.payout_bet(dealerchips)
+                    losses -= (playerchips.currentbet * 2)
                     
                 else:
                     print(
                         playersplit.name
                         + " loses $"
-                        + str(player.currentbet)
+                        + str(playerchips.currentbet)
                         + ". \n"
                     )
-                    losses -= (player.currentbet)
+                    dealerchips.return_bet()
+                    playerchips.payout_bet(dealerchips)
+                    losses -= (playerchips.currentbet)
                     
     #After completing comparisons, sends player to end prompt phase.
     return end_prompt()
@@ -829,27 +1026,27 @@ def end_prompt():
                 player.total = 0
                 player.soft = False    
                 player.facedown = None
-                player.currentbet = None
                 player.took_split = False
                 player.took_double = False     
                 player.blackjack = False
                 player.bust = False
+                player.size = 0
                 playersplit.total = 0
                 playersplit.soft = False    
                 playersplit.facedown = None
-                playersplit.currentbet = None
                 playersplit.took_split = False
                 playersplit.took_double = False    
                 playersplit.blackjack = False
                 playersplit.bust = False
+                playersplit.size = 0
                 dealer.total = 0
                 dealer.soft = False    
                 dealer.facedown = None
-                dealer.currentbet = None
                 dealer.took_split = False
                 dealer.took_double = False
                 dealer.blackjack = False
                 dealer.bust = False
+                dealer.size = 0
     
                 return play_game()
         
