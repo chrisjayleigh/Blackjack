@@ -246,7 +246,7 @@ class Chips:
     
     def payout_bet(self, target):
         counter = self.currentbet
-        while counter > 0 and self.betstack.is_empty() is False:
+        while counter > 0 and self.betstack.is_empty() is False:   
             if self.betstack.top.data == 1:
                 target.ones.push(self.betstack.pop())
                 counter -= 1
@@ -304,7 +304,6 @@ def play_game():
         + "\nThe minimum bet is $10 and the maximum is $1000.\n"
 
     )
-
     betting_phase()
 
 #Prompts player for bet amount. Moves to initial dealing phase.
@@ -326,7 +325,7 @@ def betting_phase():
                 + str(playerchips.twentyfives.size)
                 + ") \n"
                 + "One Hundred - 100 (Qty: "
-                + str(playerchips.twentyfives.size)
+                + str(playerchips.hundreds.size)
                 + ") \n"
                 + "Submit - S \n"
                 + "Reset - R \n"
@@ -334,19 +333,23 @@ def betting_phase():
                 + str(playerchips.currentbet)
                 + "\n")
 
-            if chipselect == "100":
+            if chipselect.upper() == "100":
                 playerchips.bet(100)
-            
-            elif chipselect == "25":
-                playerchips.bet(25)
-            
-            elif chipselect == "5":
-                playerchips.bet(5)
-            
-            elif chipselect == "1":
-                playerchips.bet(1)
+                dealerchips.bet(100)
 
-            elif chipselect == "R":
+            elif chipselect.upper() == "25":
+                playerchips.bet(25)
+                dealerchips.bet(25)
+
+            elif chipselect.upper() == "5":
+                playerchips.bet(5)
+                dealerchips.bet(5)
+
+            elif chipselect.upper() == "1":
+                playerchips.bet(1)
+                dealerchips.bet(1)
+
+            elif chipselect.upper() == "R":
                 while playerchips.betstack.is_empty() is False:
                     playerchips.return_bet()
                 while dealerchips.betstack.is_empty() is False:
@@ -359,7 +362,7 @@ def betting_phase():
                     "Player bet reset!"
                 )
             
-            elif chipselect == "S":
+            elif chipselect.upper() == "S":
                 if playerchips.currentbet < 10 or playerchips.currentbet > 1000:
                     print(
                         "Invalid bet. Please try again! \n"
@@ -427,8 +430,8 @@ def initial_deal():
     deck.pop()
     deck.pop()
     deck.pop()
-    deck.push({"Spades" : "A"})
-    deck.push({"Clubs" : "2"})
+    deck.push({"Spades" : "K"})
+    deck.push({"Clubs" : "7"})
     deck.push({"Hearts" : "K"})
     deck.push({"Clubs" : "Q"})
     deck.push({"Diamonds" : "Q"})
@@ -442,7 +445,6 @@ def initial_deal():
     #Checks for blackjack from player. If true, moves to dealer phase.
     if player.has_blackjack() is True:
         return dealer_phase()
-    
     #Checks for splittable hand. Prompts player to choose to split. If accepted, changes instance variable .took_split to True and moves to split play.
     if (values[list(player.top.data.values())[0]] 
         == values[list(player.top.link.data.values())[0]]):
@@ -486,7 +488,6 @@ def gameplay():
     #Create variable completecount that is incremented when either player or playersplit stands, busts or doubles down.
     handlist = [player, playersplit]
     completecount = 0
-    
     #Sets up game for split hand play by popping one card from player to splitcard variable and pushing to playersplit.
     if player.took_split is True:
         splitcard = player.pop()
@@ -628,7 +629,6 @@ def gameplay():
                                 completecount += 1
                                 handlist[i].bust = True
                                 handlist[i] = None
-                        
                         #If hand does not bust, auto stand.
                         else:
                             print(
@@ -649,7 +649,6 @@ def gameplay():
                     print(
                         "Invalid input. PLease try again! \n"
                     )
-        
         #If both hands have completed play, move to dealer phase.
         if completecount == 2:
             return dealer_phase()
@@ -726,7 +725,7 @@ def dealer_phase():
                 + str(earnings)
                 + ". \n"
             )
-            
+
         #If dealer did not bust, and at least one player hand did not bust, go to score phase.    
         if dealer.bust is False:
             return score_phase()
@@ -739,7 +738,7 @@ def dealer_phase():
 def score_phase():
     earnings = 0
     losses = 0
-
+    
     #Checks for player blackjack and compares to dealer blackjack. If player wins via blackjack, checks for double down. If double down is true, adds bet amount * 4 to player.wallet and prints bet amount * 2 as earnings.
     #Repeats this process for playersplit blackjack against dealer, and then again for dealer blackjack against both player hands. If player loses to dealer blackjack, prints corresponding amount of losses.
     if player.blackjack is True:
@@ -767,9 +766,12 @@ def score_phase():
                     + str(playerchips.currentbet)
                     + "! \n"
                 )
+
                 playerchips.return_bet()
                 dealerchips.payout_bet(playerchips)
-                earnings += (playerchips.currentbet)
+                earnings += playerchips.currentbet
+                
+
         else:
             print(
                 "Player and dealer tied! \n"
@@ -779,7 +781,7 @@ def score_phase():
             if player.took_double is True:
                 playerchips.return_bet()
                 dealerchips.return_bet()
-
+    
     if player.took_split is True:
         if playersplit.blackjack is True:
             print(
@@ -821,7 +823,7 @@ def score_phase():
                 if player.took_double is True:
                     playerchips.return_bet()
                     dealerchips.return_bet()
-
+    
     if player.blackjack is False and player.bust is False:        
 
         if dealer.blackjack is True:
@@ -850,6 +852,7 @@ def score_phase():
                 dealerchips.return_bet()
                 playerchips.payout_bet(dealerchips)
                 losses += playerchips.currentbet
+        
     if player.took_split is True:
         if playersplit.blackjack is False and playersplit.bust is False:
             if dealer.blackjack is True:
@@ -878,7 +881,7 @@ def score_phase():
                     dealerchips.return_bet()
                     playerchips.payout_bet(dealerchips)
                     losses += playerchips.currentbet
-
+    
     #If player did not bust, and neither player nor dealer have blackjack, compares player total to dealer total. Checks if player took double down in each comparison, and adjusts player wallet and earnings printout accordingly for win or loss, with or without double down.
     #Repeats this process for player split hand if player took split.
     if player.bust is False and player.blackjack is False and dealer.blackjack is False:
@@ -943,7 +946,7 @@ def score_phase():
                 playerchips.payout_bet(dealerchips)
                 losses += (playerchips.currentbet)
                 
-
+    
     if player.took_split is True:
         if playersplit.bust is False and playersplit.blackjack is False and dealer.blackjack is False:
             print(
@@ -1011,7 +1014,7 @@ def score_phase():
                     dealerchips.return_bet()
                     playerchips.payout_bet(dealerchips)
                     losses -= (playerchips.currentbet)
-                    
+                   
     #After completing comparisons, sends player to end prompt phase.
     return end_prompt()
 
@@ -1047,7 +1050,10 @@ def end_prompt():
                 dealer.blackjack = False
                 dealer.bust = False
                 dealer.size = 0
-    
+                playerchips.currentbet = 0
+                dealerchips.currentbet = 0
+            
+                
                 return play_game()
         
             elif replay.upper() == "N":
